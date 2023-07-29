@@ -1,41 +1,40 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
-let win
+const { app, BrowserWindow } = require('electron')
+const path = require('path')
 
-function mainWindow() {
-    win = new BrowserWindow({
-        width: 800,
-        height: 600,
-        frame:false,
-        // show:false,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation:false,
-            nodeIntegrationInSubFrames: true,
-        }
-    })
-    win.loadFile(`${__dirname}/index.html`)
-    
-    win.on('ready-to-show', () => {
-        win.show()
-    })
+function createWindow () {
+  const win = new BrowserWindow({
+      // transparent: true,
+    resizable: false,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+        color: "#231F20",
+        symbolColor: '#edf2f4',
+    },
+    width: 350,
+    height: 630,
+    webPreferences: {
+        nodeIntegration:true,
+        contextIsolation:true,
+        devTools:true,
+        preload: path.join(__dirname, 'preload.js'),
+    },
+  })
 
-    ipcMain.on('minimize', (e, data) => {
-        win.minimize()
-        window.minimize()
-    })
-
-    ipcMain.on('maximize', (e, data) => {
-        if (win.isMaximized()) {
-            win.unmaximize()
-        }
-        else {
-            win.maximize()
-        }
-    })
-
-    ipcMain.on('close', (e, data) => {
-        win.close()
-    })
+  win.loadFile('index.html')
 }
 
-app.on('ready', mainWindow)
+app.whenReady().then(() => {
+  createWindow()
+
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow()
+    }
+  })
+})
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
